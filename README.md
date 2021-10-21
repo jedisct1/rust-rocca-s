@@ -1,4 +1,4 @@
-# AEGIS for Rust
+# ROCCA for Rust
 
 This is a Rust implementation of the [ROCCA](https://tosc.iacr.org/index.php/ToSC/article/download/8904/8480/) authenticated cipher, ported from
 [the Zig implementation](https://github.com/jedisct1/zig-rocca).
