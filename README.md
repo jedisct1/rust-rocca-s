@@ -56,6 +56,7 @@ WebAssembly (Wasmtime)
 | aes128-gcm        | 44.13 M/s  |
 | chacha20-poly1305 | 193.05 M/s |
 | aegis128l         | 48.98 M/s  |
+| rocca             | 58.61 M/s  |
 
 ## Other implementations
 
