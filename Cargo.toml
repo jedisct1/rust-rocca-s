@@ -1,0 +1,35 @@
+[package]
+name = "rocca"
+version = "0.1.0"
+edition = "2018"
+authors = ["Frank Denis <github@pureftpd.org>"]
+description = "ROCCA authenticated cipher"
+keywords = ["rocca", "cipher", "aead", "aes", "crypto"]
+license = "MIT"
+homepage = "https://github.com/jedisct1/rust-rocca"
+repository = "https://github.com/jedisct1/rust-rocca"
+categories = ["no-std", "cryptography"]
+readme = "README.md"
+
+[target."cfg(not(any(all(target_arch = \"x86_64\", target_feature = \"aes\"),all(target_arch = \"x86\", target_feature = \"aes\"))))".dependencies.aes]
+version = "0.7.5"
+features = ["hazmat"]
+
+[dev-dependencies]
+benchmark-simple = "0.1.7"
+aegis = "0.2.2"
+aes-gcm = "0.9.4"
+chacha20poly1305 = "0.9.0"
+
+[[bench]]
+name = "benchmark"
+harness = false
+
+[features]
+default = ["std"]
+std = []
+
+[profile.release]
+codegen-units = 1
+incremental = false
+panic = "abort"
