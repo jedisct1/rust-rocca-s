@@ -1,4 +1,4 @@
-# ROCCA for Rust
+# AEGIS for Rust
 
 This is a Rust implementation of the [ROCCA](https://tosc.iacr.org/index.php/ToSC/article/download/8904/8480/) authenticated cipher, ported from
 [the Zig implementation](https://github.com/jedisct1/zig-rocca).
@@ -46,6 +46,7 @@ Macbook Pro - 2,4 GHz Intel Core i9, `RUSTFLAGS` set.
 | aes128-gcm        | 1.91 G/s |
 | chacha20-poly1305 | 1.48 G/s |
 | aegis128l         | 6.21 G/s |
+| rocca             | 6.49 G/s |
 
 WebAssembly (Wasmtime)
 
