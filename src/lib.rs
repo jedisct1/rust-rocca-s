@@ -118,7 +118,7 @@ mod rocca {
             self.update(msg0, msg1);
         }
 
-        fn dec_last(&mut self, dst: &mut [u8], src: &[u8; 32]) {
+        fn dec_partial(&mut self, dst: &mut [u8], src: &[u8; 32]) {
             let blocks = &self.blocks;
             let c0 = AesBlock::from_bytes(&src[0..16]);
             let c1 = AesBlock::from_bytes(&src[16..32]);
@@ -284,7 +284,7 @@ mod rocca {
             if clen % 32 != 0 {
                 src.fill(0);
                 src[..clen % 32].copy_from_slice(&c[i..]);
-                state.dec_last(&mut dst[..clen % 32], &src);
+                state.dec_partial(&mut dst[..clen % 32], &src);
                 m.extend_from_slice(&dst[..clen % 32]);
             }
             let tag2 = state.mac(adlen, clen);
@@ -336,7 +336,7 @@ mod rocca {
             if mclen % 32 != 0 {
                 src.fill(0);
                 src[..mclen % 32].copy_from_slice(&mc[i..]);
-                state.dec_last(&mut dst[..mclen % 32], &src);
+                state.dec_partial(&mut dst[..mclen % 32], &src);
             }
             let tag2 = state.mac(adlen, mclen);
             let mut acc = 0;
