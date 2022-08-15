@@ -293,8 +293,8 @@ mod rocca {
                 acc |= a ^ b;
             }
             if acc != 0 {
-                //     m.fill(0xaa);
-                //                return Err(Error::InvalidTag);
+                m.fill(0xaa);
+                return Err(Error::InvalidTag);
             }
             Ok(m)
         }
@@ -337,6 +337,7 @@ mod rocca {
                 src.fill(0);
                 src[..mclen % 32].copy_from_slice(&mc[i..]);
                 state.dec_partial(&mut dst[..mclen % 32], &src);
+                mc[i..].copy_from_slice(&dst[..mclen % 32]);
             }
             let tag2 = state.mac(adlen, mclen);
             let mut acc = 0;
@@ -382,6 +383,19 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "std")]
+    fn test_rocca_small() {
+        let m = [0u8; 6];
+        let ad = [0u8; 32];
+        let key = [0u8; 32];
+        let nonce = [0u8; 16];
+
+        let (c, tag) = Rocca::new(&nonce, &key).encrypt(&m, &ad);
+        let m2 = Rocca::new(&nonce, &key).decrypt(&c, &tag, &ad).unwrap();
+        assert_eq!(m2, m);
+    }
+
+    #[test]
     fn test_rocca_in_place() {
         let m = [0u8; 64];
         let ad = [0u8; 32];
@@ -407,6 +421,21 @@ mod tests {
             .unwrap();
         assert_eq!(mc, &m);
     }
+
+    #[test]
+    fn test_rocca_in_place_small() {
+        let m = [0u8; 6];
+        let ad = [0u8; 32];
+        let key = [0u8; 32];
+        let nonce = [0u8; 16];
+
+        let mut mc = m.to_vec();
+        let tag = Rocca::new(&nonce, &key).encrypt_in_place(&mut mc, &ad);
+        Rocca::new(&nonce, &key)
+            .decrypt_in_place(&mut mc, &tag, &ad)
+            .unwrap();
+        assert_eq!(mc, &m);
+    }
 }
 
-pub use rocca::*;
+pub use self::rocca::*;
