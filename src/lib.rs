@@ -45,7 +45,7 @@ mod rocca {
     pub use crate::Error;
 
     /// ROCCA authentication tag
-    pub type Tag = [u8; 16];
+    pub type Tag = [u8; 32];
 
     /// ROCCA key
     pub type Key = [u8; 32];
@@ -56,21 +56,22 @@ mod rocca {
     #[repr(transparent)]
     #[derive(Debug, Clone, Copy)]
     struct State {
-        blocks: [AesBlock; 8],
+        blocks: [AesBlock; 7],
     }
+
+    const ROUNDS: usize = 16;
 
     impl State {
         fn update(&mut self, x0: AesBlock, x1: AesBlock) {
             let blocks = &mut self.blocks;
-            let next: [AesBlock; 8] = [
-                blocks[7].xor(x0),
-                blocks[0].round(blocks[7]),
-                blocks[1].xor(blocks[6]),
-                blocks[2].round(blocks[1]),
-                blocks[3].xor(x1),
+            let next: [AesBlock; 7] = [
+                blocks[6].xor(blocks[1]),
+                blocks[0].round(x0),
+                blocks[1].round(blocks[0]),
+                blocks[2].round(blocks[6]),
+                blocks[3].round(x1),
                 blocks[4].round(blocks[3]),
                 blocks[5].round(blocks[4]),
-                blocks[0].xor(blocks[6]),
             ];
             self.blocks = next;
         }
@@ -87,10 +88,9 @@ mod rocca {
             let zero = AesBlock::from_bytes(&[0; 16]);
             let nonce_block = AesBlock::from_bytes(nonce);
 
-            let blocks: [AesBlock; 8] =
-                [k1, nonce_block, z0, z1, nonce_block.xor(k1), zero, k0, zero];
+            let blocks: [AesBlock; 7] = [k1, nonce_block, z0, k0, z1, nonce_block.xor(k1), zero];
             let mut state = State { blocks };
-            for _ in 0..20 {
+            for _ in 0..ROUNDS {
                 state.update(z0, z1);
             }
             state
@@ -100,10 +100,10 @@ mod rocca {
             let blocks = &self.blocks;
             let msg0 = AesBlock::from_bytes(&src[0..16]);
             let msg1 = AesBlock::from_bytes(&src[16..32]);
-            let c0 = blocks[1].round(blocks[5]).xor(msg0);
-            let c1 = blocks[0].xor(blocks[4]).round(blocks[2]).xor(msg1);
-            dst[..16].copy_from_slice(&c0.as_bytes());
-            dst[16..32].copy_from_slice(&c1.as_bytes());
+            let tmp0 = blocks[3].xor(blocks[5]).round(blocks[0]).xor(msg0);
+            let tmp1 = blocks[4].xor(blocks[6]).round(blocks[2]).xor(msg1);
+            dst[..16].copy_from_slice(&tmp0.as_bytes());
+            dst[16..32].copy_from_slice(&tmp1.as_bytes());
             self.update(msg0, msg1);
         }
 
@@ -111,8 +111,8 @@ mod rocca {
             let blocks = &self.blocks;
             let c0 = AesBlock::from_bytes(&src[0..16]);
             let c1 = AesBlock::from_bytes(&src[16..32]);
-            let msg0 = blocks[1].round(blocks[5]).xor(c0);
-            let msg1 = blocks[0].xor(blocks[4]).round(blocks[2]).xor(c1);
+            let msg0 = blocks[3].xor(blocks[5]).round(blocks[0]).xor(c0);
+            let msg1 = blocks[4].xor(blocks[6]).round(blocks[2]).xor(c1);
             dst[..16].copy_from_slice(&msg0.as_bytes());
             dst[16..32].copy_from_slice(&msg1.as_bytes());
             self.update(msg0, msg1);
@@ -122,8 +122,8 @@ mod rocca {
             let blocks = &self.blocks;
             let c0 = AesBlock::from_bytes(&src[0..16]);
             let c1 = AesBlock::from_bytes(&src[16..32]);
-            let msg0 = blocks[1].round(blocks[5]).xor(c0);
-            let msg1 = blocks[0].xor(blocks[4]).round(blocks[2]).xor(c1);
+            let msg0 = blocks[3].xor(blocks[5]).round(blocks[0]).xor(c0);
+            let msg1 = blocks[4].xor(blocks[6]).round(blocks[2]).xor(c1);
             let mut padded = [0u8; 32];
             padded[..16].copy_from_slice(&msg0.as_bytes());
             padded[16..32].copy_from_slice(&msg1.as_bytes());
@@ -140,19 +140,16 @@ mod rocca {
             let mlen_bytes = (mlen as u128 * 8).to_le_bytes();
             let adlen_block = AesBlock::from_bytes(&adlen_bytes);
             let mlen_block = AesBlock::from_bytes(&mlen_bytes);
-            for _ in 0..20 {
+            for _ in 0..ROUNDS {
                 self.update(adlen_block, mlen_block);
             }
             let blocks = &self.blocks;
-            let mac = blocks[0]
-                .xor(blocks[1])
-                .xor(blocks[2])
-                .xor(blocks[3])
-                .xor(blocks[4])
-                .xor(blocks[5])
-                .xor(blocks[6])
-                .xor(blocks[7]);
-            mac.as_bytes()
+            let tmp0 = blocks[0].xor(blocks[1]).xor(blocks[2]).xor(blocks[3]);
+            let tmp1 = blocks[4].xor(blocks[5]).xor(blocks[6]);
+            let mut tag = [0u8; 32];
+            tag[..16].copy_from_slice(&tmp0.as_bytes());
+            tag[16..32].copy_from_slice(&tmp1.as_bytes());
+            tag
         }
     }
 
@@ -357,6 +354,8 @@ mod rocca {
 mod tests {
     use crate::rocca::Rocca;
 
+    use ct_codecs::{Decoder, Hex};
+
     #[test]
     #[cfg(feature = "std")]
     fn test_rocca() {
@@ -366,17 +365,14 @@ mod tests {
         let nonce = [0u8; 16];
 
         let (c, tag) = Rocca::new(&nonce, &key).encrypt(&m, &ad);
-        let expected_c = [
-            21, 137, 47, 133, 85, 173, 45, 180, 116, 155, 144, 146, 101, 113, 196, 184, 194, 139,
-            67, 79, 39, 119, 147, 197, 56, 51, 203, 110, 65, 168, 85, 41, 23, 132, 162, 199, 254,
-            55, 75, 52, 216, 117, 253, 203, 232, 79, 91, 136, 191, 63, 56, 111, 34, 24, 240, 70,
-            168, 67, 24, 86, 80, 38, 215, 85,
-        ];
-        let expected_tag = [
-            204, 114, 140, 139, 174, 221, 54, 241, 76, 248, 147, 142, 158, 7, 25, 191,
-        ];
+        let expected_c = Hex::decode_to_vec("9ac3326495a8d414fe407f47b54410502481cf79cab8c0a669323e07711e46170de5b2fbba0fae8de7c1fccaeefc362624fcfdc15f8bb3e64457e8b7e37557bb", None).unwrap();
+        let expected_tag = Hex::decode_to_vec(
+            "8df934d1483710c9410f6a089c4ced9791901b7e2e661206202db2cc7a24a386",
+            None,
+        )
+        .unwrap();
         assert_eq!(c, expected_c);
-        assert_eq!(tag, expected_tag);
+        assert_eq!(tag, expected_tag[..tag.len()]);
 
         let m2 = Rocca::new(&nonce, &key).decrypt(&c, &tag, &ad).unwrap();
         assert_eq!(m2, m);
@@ -404,17 +400,14 @@ mod tests {
 
         let mut mc = m.to_vec();
         let tag = Rocca::new(&nonce, &key).encrypt_in_place(&mut mc, &ad);
-        let expected_mc = [
-            21, 137, 47, 133, 85, 173, 45, 180, 116, 155, 144, 146, 101, 113, 196, 184, 194, 139,
-            67, 79, 39, 119, 147, 197, 56, 51, 203, 110, 65, 168, 85, 41, 23, 132, 162, 199, 254,
-            55, 75, 52, 216, 117, 253, 203, 232, 79, 91, 136, 191, 63, 56, 111, 34, 24, 240, 70,
-            168, 67, 24, 86, 80, 38, 215, 85,
-        ];
-        let expected_tag = [
-            204, 114, 140, 139, 174, 221, 54, 241, 76, 248, 147, 142, 158, 7, 25, 191,
-        ];
+        let expected_mc = Hex::decode_to_vec("9ac3326495a8d414fe407f47b54410502481cf79cab8c0a669323e07711e46170de5b2fbba0fae8de7c1fccaeefc362624fcfdc15f8bb3e64457e8b7e37557bb", None).unwrap();
+        let expected_tag = Hex::decode_to_vec(
+            "8df934d1483710c9410f6a089c4ced9791901b7e2e661206202db2cc7a24a386",
+            None,
+        )
+        .unwrap();
         assert_eq!(mc, expected_mc);
-        assert_eq!(tag, expected_tag);
+        assert_eq!(tag, expected_tag[..tag.len()]);
 
         Rocca::new(&nonce, &key)
             .decrypt_in_place(&mut mc, &tag, &ad)
