@@ -93,6 +93,13 @@ mod rocca {
             for _ in 0..ROUNDS {
                 state.update(z0, z1);
             }
+            state.blocks[0] = state.blocks[0].xor(k0);
+            state.blocks[1] = state.blocks[1].xor(k0);
+            state.blocks[2] = state.blocks[2].xor(k1);
+            state.blocks[3] = state.blocks[3].xor(k0);
+            state.blocks[4] = state.blocks[4].xor(k0);
+            state.blocks[5] = state.blocks[5].xor(k1);
+            state.blocks[6] = state.blocks[6].xor(k1);
             state
         }
 
