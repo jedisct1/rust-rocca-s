@@ -38,15 +38,15 @@ Crates:
 - `aegis128l`
 - `rocca`
 
-Macbook Pro - 2,4 GHz Intel Core i9, `RUSTFLAGS` set.
+Scaleway EPYC 7543 instance, `RUSTFLAGS` set.
 
-| cipher            | speed    |
-| ----------------- | -------- |
-| aes256-gcm        | 1.59 G/s |
-| aes128-gcm        | 1.91 G/s |
-| chacha20-poly1305 | 1.48 G/s |
-| aegis128l         | 6.21 G/s |
-| rocca             | 6.49 G/s |
+| cipher            | speed      |
+| ----------------- | ---------- |
+| aes256-gcm        | 1.18 G/s  |
+| aes128-gcm        | 1.24 G/s  |
+| chacha20-poly1305 | 1.62 G/s |
+| aegis128l         | 16.09 G/s  |
+| rocca             | 4.92 G/s  |
 
 WebAssembly (Wasmtime)
 
@@ -65,6 +65,6 @@ WebAssembly (Wasmtime)
 | aes256-gcm (OpenSSL)        | 4.97 G/s  |
 | aes128-gcm (OpenSSL)        | 6.89 G/s  |
 | chacha20-poly1305 (OpenSSL) | 2.67 G/s  |
-| aes128-ocb (OpenSSL)        | 7.10 G/s  |
-| aegis128l (Zig)             | 14.08 G/s |
-| rocca (Zig)                 | 16.28 G/s |
+| aes128-ocb (OpenSSL)        | 8.93 G/s  |
+| aegis128x (Zig)             | 29.07 G/s |
+
