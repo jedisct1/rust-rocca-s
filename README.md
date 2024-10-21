@@ -3,7 +3,7 @@
 This is a Rust implementation of the [ROCCA-S: an efficient AES-based encryption scheme for beyond 5G](https://www.ietf.org/archive/id/draft-nakano-rocca-s-03.html) authenticated cipher, ported from
 [the Zig implementation](https://github.com/jedisct1/zig-rocca).
 
-ROCCA-S is key committing, has a 256 bit key size, a 128 bit nonce, processes 256 bit message blocks and outputs a 256 bit authentication tag.
+ROCCA-S is has a 256 bit key size, a 128 bit nonce, processes 256 bit message blocks and outputs a 256 bit authentication tag.
 
 # Cargo flags
 
@@ -40,31 +40,20 @@ Crates:
 
 Scaleway EPYC 7543 instance, `RUSTFLAGS` set.
 
-| cipher            | speed    |
-| ----------------- | -------- |
-| aes256-gcm        | 1.18 G/s |
-| aes128-gcm        | 1.24 G/s |
-| chacha20-poly1305 | 1.62 G/s |
-| aegis128l (rust)  | 5.08 G/s |
-| rocca             | 5.09 G/s |
+| cipher                | speed    |
+| --------------------- | -------- |
+| aes256-gcm            | 1.18 G/s |
+| aes128-gcm            | 1.24 G/s |
+| chacha20-poly1305     | 1.62 G/s |
+| aegis128l (pure rust) | 5.08 G/s |
+| rocca-s               | 5.09 G/s |
 
-WebAssembly (Wasmtime)
+WebAssembly (Wasmtime, Apple M1)
 
-| cipher            | speed      |
-| ----------------- | ---------- |
-| aes256-gcm        | 36.88 M/s  |
-| aes128-gcm        | 44.13 M/s  |
-| chacha20-poly1305 | 193.05 M/s |
-| aegis128l         | 48.98 M/s  |
-| rocca             | 58.61 M/s  |
-
-## Other implementations
-
-| cipher (implementation)     | speed    |
-| --------------------------- | -------- |
-| aes256-gcm (OpenSSL)        | 4.97 G/s |
-| aes128-gcm (OpenSSL)        | 6.89 G/s |
-| chacha20-poly1305 (OpenSSL) | 2.67 G/s |
-| aes128-ocb (OpenSSL)        | 8.93 G/s |
-
-
+| cipher                   | speed      |
+| ------------------------ | ---------- |
+| aes256-gcm (rust-crypto) | 47.75 M/s  |
+| aes128-gcm (rust-crypto) | 58.41 M/s  |
+| chacha20-poly1305        | 158.37 M/s |
+| aegis128l (protected)    | 528.98 M/s |
+| rocca-s (unprotected)    | 615.84 M/s |

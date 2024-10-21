@@ -11,16 +11,18 @@ repository = "https://github.com/jedisct1/rust-rocca"
 categories = ["no-std", "cryptography"]
 readme = "README.md"
 
-[target."cfg(not(any(all(target_arch = \"x86_64\", target_feature = \"aes\"),all(target_arch = \"x86\", target_feature = \"aes\"))))".dependencies.aes]
-version = "0.8.2"
-features = ["hazmat"]
+[target."cfg(not(any(all(target_arch = \"x86_64\", target_feature = \"aes\"),all(target_arch = \"x86\", target_feature = \"aes\"))))".dependencies.softaes]
+version = "0.1.3"
 
 [dev-dependencies]
-benchmark-simple = "0.1.7"
-aegis = "0.3.0"
-aes-gcm = "0.10.1"
+benchmark-simple = "0.1.9"
+aegis = "0.6.7"
+aes-gcm = "0.10.3"
 chacha20poly1305 = "0.10.1"
-ct-codecs = "1.1.1"
+ct-codecs = "1.1.2"
+
+[target."cfg(not(any(target_arch = \"wasm32\", target_arch = \"wasm64\")))".dev-dependencies.boring]
+version = "4.10.3"
 
 [[bench]]
 name = "benchmark"
