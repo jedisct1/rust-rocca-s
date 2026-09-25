@@ -1,7 +1,7 @@
 # ROCCA-S for Rust
 
 This is a Rust implementation of the [ROCCA-S: an efficient AES-based encryption scheme for beyond 5G](https://www.ietf.org/archive/id/draft-nakano-rocca-s-03.html) authenticated cipher, ported from
-[the Zig implementation](https://github.com/jedisct1/zig-rocca).
+[the Zig implementation](https://github.com/jedisct1/zig-rocca-s).
 
 ROCCA-S is has a 256 bit key size, a 128 bit nonce, processes 256 bit message blocks and outputs a 256 bit authentication tag.
 
